@@ -19,3 +19,8 @@ class InsuGuiaApp extends StatelessWidget {
     );
   }
 }
+
+// Backwards-compatible alias used by some tests/examples
+class MyApp extends InsuGuiaApp {
+  const MyApp({super.key});
+}
