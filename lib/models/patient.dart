@@ -1,13 +1,15 @@
 class Patient {
+  final String id;
   final String name;
   final int age;
-  final double weight; // kg
+  final double weight; 
   final String gender;
-  final double? height; // cm
-  final double? creatinine; // mg/dL
-  final String? admissionLocation; // e.g., Enfermaria, UTI
+  final double? height; 
+  final double? creatinine; 
+  final String? admissionLocation;
 
   Patient({
+    required this.id,
     required this.name,
     required this.age,
     required this.weight,
@@ -24,6 +26,7 @@ class Patient {
   }
 
   Map<String, dynamic> toJson() => {
+        'id': id,
         'name': name,
         'age': age,
         'weight': weight,
@@ -34,6 +37,7 @@ class Patient {
       };
 
   factory Patient.fromJson(Map<String, dynamic> json) => Patient(
+        id: json['id'] as String? ?? '',
         name: json['name'] as String? ?? '',
         age: (json['age'] as num?)?.toInt() ?? 0,
         weight: (json['weight'] as num?)?.toDouble() ?? 0.0,

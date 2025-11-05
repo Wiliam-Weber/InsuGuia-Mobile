@@ -59,30 +59,39 @@ class _MonitoringScreenState extends State<MonitoringScreen> {
         padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _glucoseController,
-                    decoration: const InputDecoration(labelText: 'Glicemia (mg/dL)'),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  ),
+            // Vamos usar o mesmo estilo do formulário
+            Card(
+              margin: const EdgeInsets.all(0),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextFormField( // Trocamos TextField por TextFormField
+                        controller: _glucoseController,
+                        decoration: const InputDecoration(labelText: 'Glicemia (mg/dL) *'),
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    // O botão pega o tema
+                    ElevatedButton(
+                      onPressed: () {
+                        final raw = _glucoseController.text.trim().replaceAll(',', '.');
+                        final val = double.tryParse(raw);
+                        if (val == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Valor inválido')));
+                          return;
+                        }
+                        _addEntry(val);
+                        _glucoseController.clear();
+                      },
+                      child: const Text('Adicionar'),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: () {
-                    final raw = _glucoseController.text.trim().replaceAll(',', '.');
-                    final val = double.tryParse(raw);
-                    if (val == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Valor inválido')));
-                      return;
-                    }
-                    _addEntry(val);
-                    _glucoseController.clear();
-                  },
-                  child: const Text('Adicionar'),
-                ),
-              ],
+              ),
             ),
             const SizedBox(height: 12),
             Expanded(
@@ -92,21 +101,39 @@ class _MonitoringScreenState extends State<MonitoringScreen> {
                       itemCount: _entries.length,
                       itemBuilder: (context, index) {
                         final e = _entries[index];
+                        // Geramos a prescrição com a glicemia atual
                         final suggestion = service.generatePrescription(widget.patient, currentGlucoseMgDl: e.glucose);
+                        
+                        // ------ MUDANÇA AQUI ------
+                        // Buscamos o item de correção na lista
+                        String doseSugerida = "Nenhuma";
+                        try {
+                          final itemCorrecao = suggestion.items.firstWhere(
+                            (item) => item.type == PrescriptionItemType.correcao
+                          );
+                          // Pegamos a dose calculada (Ex: "1.6 UI (AGORA)")
+                          doseSugerida = itemCorrecao.dose;
+                        } catch (e) {
+                          // Caso não encontre (nunca deve acontecer)
+                          doseSugerida = "Erro";
+                        }
+                        // -------------------------
+
                         return Card(
                           child: ListTile(
-                            title: Text('${e.glucose.toStringAsFixed(0)} mg/dL'),
+                            leading: const Icon(Icons.timeline),
+                            title: Text('${e.glucose.toStringAsFixed(0)} mg/dL', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                             subtitle: Text('Registrado: ${e.timestamp.toLocal().toString().split('.').first}\n'
-                                'Sugestão de correção: ${suggestion.suggestedCorrectionDoseUi != null ? '${suggestion.suggestedCorrectionDoseUi!.toStringAsFixed(1)} UI' : 'Nenhuma'}'),
+                                'Sugestão de correção: $doseSugerida'), // Atualizado
                             isThreeLine: true,
                           ),
                         );
                       },
                     ),
             ),
-            ElevatedButton(
+            // Botão com estilo (OutlinedButton para ação secundária)
+            OutlinedButton(
               onPressed: () async {
-                // In-memory clear (simulated)
                 setState(() => _entries.clear());
               },
               child: const Text('Limpar histórico (simulado)'),
